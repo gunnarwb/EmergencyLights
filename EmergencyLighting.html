@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Building Inspection Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      gap: 20px;
+    }
+    .left-column {
+      flex: 0 0 40%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 20px;
+      max-height: calc(100vh - 100px);
+      box-sizing: border-box;
+    }
+    .right-column {
+      flex: 1;
+      position: sticky;
+      top: 20px;
+      align-self: flex-start;
+    }
+    .building-image {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .light-button {
+      position: absolute;
+      background-color: rgba(255, 65, 54, 0.9);
+      color: white;
+      border: 1px solid white;
+      padding: 5px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      line-height: 20px;
+    }
+    .light-button.checked {
+      background-color: rgba(46, 204, 64, 0.9);
+    }
+    #report {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    h1 {
+      text-align: center;
+    }
+    #commentBox {
+      width: 100%;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    #signatureSection {
+      margin-top: 20px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+    #signatureBox {
+      width: 100%;
+      padding: 5px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+    #instructions, #report {
+      max-width: 100%;
+      word-wrap: break-word;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <h1>Monthly Inspection Dashboard</h1>
+  <div class="container">
+    <div class="left-column">
+      <div id="instructions">
+        <p>Hi Rachael, and welcome to your monthly emergency light inspection report.
+          To begin this test please go to the back electric panel (Panel A SEC 1)
+          From there you power down the first switch, I have also added a "test" label
+          on it for you.</p>
+        
+        <p>When you flip this switch the lights will shut off. Walk around the entire building
+          and make sure all the emergency lights are working. They must be tested for 90 seconds.</p>
+
+        <p>Once you have deemed all the lights work, please click each of the red buttons on the image. They
+          will flip to green, which notates the time you pressed it, and is your way of saying everything
+          works as it should.</p>
+          
+        <p>If there are any issues, please document any issues or concerns below,
+          and let me know. Otherwise leave this section blank:</p>
+      </div>
+      <textarea id="commentBox" rows="4" cols="20"></textarea>
+      <div id="report"></div>
+    </div>
+    <div class="right-column">
+      <img src="Media/Diagram2.png" alt="Building Layout" class="building-image" id="building-image">
+    </div>
+  </div>
+
+  <script>
+    // Initialize an array to store the inspection data
+    const inspectionData = [];
+
+    // Define the light locations
+    const lightLocations = [
+      { number: 1, left: "71.25%", top: "95%" },
+      { number: 2, left: "38%", top: "68%" },
+      { number: 3, left: "13%", top: "85%" },
+      { number: 4, left: "33%", top: "53%" },
+      { number: 5, left: "78%", top: "56.25%" },
+      { number: 6, left: "33%", top: "47%" },
+      { number: 7, left: "2.5%", top: "14%" },
+      { number: 8, left: "26.25%", top: "9%" },
+      { number: 9, left: "65%", top: "15%" },
+      { number: 10, left: "84.38%", top: "32%" },
+      { number: 11, left: "57%", top: "38%" },
+      { number: 12, left: "80%", top: "2%" }
+    ];
+
+    // Function to handle light button clicks
+    function handleLightClick(lightNumber, button) {
+      const currentDate = new Date();
+      const inspectionTime = currentDate.toLocaleString();
+      
+      button.classList.toggle('checked');
+      
+      const existingInspection = inspectionData.find(data => data.lightNumber === lightNumber);
+      if (existingInspection) {
+        existingInspection.inspectionDate = button.classList.contains('checked') ? inspectionTime : null;
+      } else {
+        inspectionData.push({
+          lightNumber: lightNumber,
+          inspectionDate: button.classList.contains('checked') ? inspectionTime : null
+        });
+      }
+
+      updateReport();
+    }
+
+    // Function to render the light buttons on the image
+    function renderLightButtons() {
+      const rightColumn = document.querySelector('.right-column');
+      const image = document.getElementById('building-image');
+      const imageRect = image.getBoundingClientRect();
+
+      lightLocations.forEach(({ number, left, top }) => {
+        const button = document.createElement('button');
+        button.classList.add('light-button');
+        button.textContent = `${number}`;
+        
+        button.style.left = left;
+        button.style.top = top;
+        
+        button.onclick = () => handleLightClick(number, button);
+        rightColumn.appendChild(button);
+      });
+    }
+
+    // Function to update the report
+    function updateReport() {
+      const reportElement = document.getElementById('report');
+      let reportContent = '<h2>Inspection Report</h2>';
+
+      // Add signature field
+      reportContent += `
+        <div id="signatureSection">
+          <p>By signing below, I verify that all information provided in this report is accurate to the best of my knowledge.</p>
+          <label for="signatureBox">Signature:</label>
+          <input type="text" id="signatureBox" placeholder="Type your full name">
+          <p>Date: ${new Date().toLocaleDateString()}</p>
+        </div>
+      `;
+      
+      // Create table for the report
+      reportContent += `
+        <table>
+          <tr>
+            <th>Date</th>
+            <th>A or M</th>
+            <th>Unit Number</th>
+            <th>Start Time</th>
+            <th>Stop Time</th>
+            <th>Pass</th>
+            <th>Fail</th>
+            <th>Tester's Initials</th>
+          </tr>
+      `;
+
+      const currentDate = new Date().toLocaleDateString();
+      const testerInitials = document.getElementById('signatureBox')?.value.split(' ').map(name => name[0]).join('').toUpperCase() || '';
+
+      inspectionData.sort((a, b) => a.lightNumber - b.lightNumber).forEach(data => {
+        const startTime = data.inspectionDate ? new Date(data.inspectionDate) : null;
+        const stopTime = startTime ? new Date(startTime.getTime() + 2 * 60000) : null; // 2 minutes after start time
+        const passed = data.inspectionDate ? 'X' : '';
+        const failed = data.inspectionDate ? '' : 'X';
+
+        reportContent += `
+          <tr>
+            <td>${currentDate}</td>
+            <td>M</td>
+            <td>${data.lightNumber}</td>
+            <td>${startTime ? startTime.toLocaleTimeString() : ''}</td>
+            <td>${stopTime ? stopTime.toLocaleTimeString() : ''}</td>
+            <td>${passed}</td>
+            <td>${failed}</td>
+            <td>${testerInitials}</td>
+          </tr>
+        `;
+      });
+
+      reportContent += '</table>';
+
+      reportElement.innerHTML = reportContent;
+      
+      addSaveButton();
+    }
+
+    // Function to generate report content as a string
+    function generateReportContent() {
+      let content = "Inspection Report\n\n";
+      content += "Date\tA or M\tUnit Number\tStart Time\tStop Time\tPass\tFail\tTester's Initials\n";
+
+      const currentDate = new Date().toLocaleDateString();
+      const testerInitials = document.getElementById('signatureBox').value.split(' ').map(name => name[0]).join('').toUpperCase();
+
+      inspectionData.sort((a, b) => a.lightNumber - b.lightNumber).forEach(data => {
+        const startTime = data.inspectionDate ? new Date(data.inspectionDate) : null;
+        const stopTime = startTime ? new Date(startTime.getTime() + 2 * 60000) : null; // 2 minutes after start time
+        const passed = data.inspectionDate ? 'X' : '';
+        const failed = data.inspectionDate ? '' : 'X';
+
+        content += `${currentDate}\tM\t${data.lightNumber}\t`;
+        content += `${startTime ? startTime.toLocaleTimeString() : ''}\t`;
+        content += `${stopTime ? stopTime.toLocaleTimeString() : ''}\t`;
+        content += `${passed}\t${failed}\t${testerInitials}\n`;
+      });
+
+      // Add comments to the report
+      const comments = document.getElementById('commentBox').value;
+      if (comments.trim()) {
+        content += "\nAdditional Comments:\n" + comments + "\n";
+      }
+
+      // Add signature to the report
+      const signature = document.getElementById('signatureBox').value;
+      content += "\n\nSignature: " + signature + "\n";
+      content += "Date: " + currentDate + "\n";
+
+      return content;
+    }
+
+    // Function to save report to file
+    function saveReportToFile() {
+      const content = generateReportContent();
+      const blob = new Blob([content], { type: 'text/plain' });
+      
+      // Generate dynamic filename
+      const currentDate = new Date();
+      const year = currentDate.getFullYear().toString().slice(-2);
+      const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+      const day = currentDate.getDate().toString().padStart(2, '0');
+      const filename = `EmergencyLightTest-${year}-${month}-${day}.txt`;
+
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function addSaveButton() {
+      let saveButton = document.getElementById('saveButton');
+      if (!saveButton) {
+        saveButton = document.createElement('button');
+        saveButton.id = 'saveButton';
+        saveButton.textContent = 'Save to File';
+        saveButton.onclick = saveReportToFile;
+        document.getElementById('report').appendChild(saveButton);
+      }
+    }
+
+    // Call functions in the correct order when the window loads
+    window.onload = () => {
+      const image = document.getElementById('building-image');
+      
+      // Function to initialize the dashboard
+      function initializeDashboard() {
+        renderLightButtons();
+        updateReport();
+      }
+
+      // Check if the image is already loaded
+      if (image.complete) {
+        initializeDashboard();
+      } else {
+        image.onload = initializeDashboard;
+        // Fallback in case the image fails to load
+        image.onerror = () => {
+          console.error("Error loading image");
+          initializeDashboard();
+        };
+        // Fallback if onload doesn't trigger after 5 seconds
+        setTimeout(() => {
+          if (!image.complete) {
+            console.warn("Image load timed out, initializing anyway");
+            initializeDashboard();
+          }
+        }, 5000);
+      }
+    };
+</script>
+</body>
+</html>
